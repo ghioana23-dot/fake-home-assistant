@@ -223,6 +223,19 @@ async def auth_token(request):
     })
 
 
+async def mobile_app_register(request):
+    """POST /api/mobile_app/registrations - Fake device registration"""
+    data = await request.json()
+    device_name = data.get("device_name", "Unknown Device")
+    logger.info(f"Mobile app registration: {device_name} (fake!)")
+    return web.json_response({
+        "cloudhook_url": "https://fake.example.com/cloudhook",
+        "remote_ui_url": "https://fake-home-assistant.onrender.com",
+        "secret": "FAKE_SECRET_12345",
+        "webhook_id": "fake-webhook-id-12345",
+    })
+
+
 def create_app():
     app = web.Application()
 
@@ -235,6 +248,9 @@ def create_app():
     # OAuth (fake - auto-approves everything)
     app.router.add_get("/auth/authorize", auth_authorize)
     app.router.add_post("/auth/token", auth_token)
+
+    # Mobile App integration (fake)
+    app.router.add_post("/api/mobile_app/registrations", mobile_app_register)
 
     # WebSocket API
     app.router.add_get("/api/websocket", websocket_handler)
