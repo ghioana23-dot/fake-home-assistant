@@ -202,6 +202,27 @@ async def frontend_index(request):
     return web.Response(text=html, content_type="text/html")
 
 
+async def auth_authorize(request):
+    """GET /auth/authorize - Fake OAuth authorize, instantly approves"""
+    redirect_uri = request.query.get("redirect_uri", "homeassistant://auth-callback")
+    # Instantly approve and redirect back with a fake code
+    location = f"{redirect_uri}?code=FAKE_GODDESS_CODE_12345"
+    logger.info(f"OAuth authorize → redirecting to {redirect_uri} with fake code")
+    raise web.HTTPFound(location)
+
+
+async def auth_token(request):
+    """POST /auth/token - Exchange code for tokens"""
+    data = await request.post()
+    logger.info(f"OAuth token exchange: grant_type={data.get('grant_type')}")
+    return web.json_response({
+        "access_token": FAKE_TOKEN,
+        "token_type": "Bearer",
+        "expires_in": 86400,
+        "refresh_token": "FAKE_REFRESH_12345",
+    })
+
+
 def create_app():
     app = web.Application()
 
@@ -210,6 +231,10 @@ def create_app():
     app.router.add_get("/api/config", api_config)
     app.router.add_get("/api/discovery_info", api_discovery_info)
     app.router.add_get("/api/states", api_states)
+
+    # OAuth (fake - auto-approves everything)
+    app.router.add_get("/auth/authorize", auth_authorize)
+    app.router.add_post("/auth/token", auth_token)
 
     # WebSocket API
     app.router.add_get("/api/websocket", websocket_handler)
